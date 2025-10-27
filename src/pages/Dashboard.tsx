@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { TaskList } from '@/components/dashboard/TaskList';
 
 interface DashboardStats {
   totalTasks: number;
@@ -25,6 +26,23 @@ interface DashboardStats {
   inReviewTasks: number;
   totalUsers: number;
   totalTeams: number;
+}
+
+interface TaskWithDetails {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  assignee_id: string | null;
+  team_id: string | null;
+  assignee?: {
+    full_name: string | null;
+    email: string;
+  } | null;
+  team?: {
+    name: string;
+  } | null;
 }
 
 export default function Dashboard() {
@@ -40,10 +58,31 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [recentTasks, setRecentTasks] = useState<TaskWithDetails[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
     checkAdminRole();
+    
+    // Set up real-time subscription for tasks
+    const channel = supabase
+      .channel('dashboard-tasks')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const checkAdminRole = async () => {
@@ -61,10 +100,25 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [tasksRes, usersRes, teamsRes] = await Promise.all([
+      const [tasksRes, usersRes, teamsRes, recentTasksRes] = await Promise.all([
         supabase.from('tasks').select('status', { count: 'exact' }),
         supabase.from('profiles').select('id', { count: 'exact' }),
         supabase.from('teams').select('id', { count: 'exact' }),
+        supabase
+          .from('tasks')
+          .select(`
+            id,
+            title,
+            status,
+            priority,
+            created_at,
+            assignee_id,
+            team_id,
+            assignee:assignee_id(full_name, email),
+            team:team_id(name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(10)
       ]);
 
       const tasks = tasksRes.data || [];
@@ -77,6 +131,8 @@ export default function Dashboard() {
         totalUsers: usersRes.count || 0,
         totalTeams: teamsRes.count || 0,
       });
+      
+      setRecentTasks(recentTasksRes.data || []);
     } catch (error: any) {
       toast.error('Failed to load dashboard data');
     } finally {
@@ -250,6 +306,21 @@ export default function Dashboard() {
                 </Button>
               )}
             </div>
+          </Card>
+        </motion.div>
+
+        {/* Recent Tasks */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mt-8"
+        >
+          <Card className="glass border-border/50 p-6">
+            <TaskList 
+              tasks={recentTasks} 
+              title={isAdmin ? "Recent Tasks (All Teams)" : "Recent Tasks (Your Team)"} 
+            />
           </Card>
         </motion.div>
       </main>
