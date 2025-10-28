@@ -13,11 +13,11 @@ interface TaskWithDetails {
   created_at: string;
   assignee_id: string | null;
   team_id: string | null;
-  assignee?: {
+  profiles?: {
     full_name: string | null;
     email: string;
   } | null;
-  team?: {
+  teams?: {
     name: string;
   } | null;
 }
@@ -67,17 +67,17 @@ export function TaskList({ tasks, title }: TaskListProps) {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                      {task.team && (
+                      {task.teams && (
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          <span>{task.team.name}</span>
+                          <span>{task.teams.name}</span>
                         </div>
                       )}
                       
-                      {task.assignee && (
+                      {task.profiles && (
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
-                          <span>{task.assignee.full_name || task.assignee.email}</span>
+                          <span>{task.profiles.full_name || task.profiles.email}</span>
                         </div>
                       )}
                       

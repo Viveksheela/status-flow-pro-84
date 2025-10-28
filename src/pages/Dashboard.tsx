@@ -36,11 +36,11 @@ interface TaskWithDetails {
   created_at: string;
   assignee_id: string | null;
   team_id: string | null;
-  assignee?: {
+  profiles?: {
     full_name: string | null;
     email: string;
   } | null;
-  team?: {
+  teams?: {
     name: string;
   } | null;
 }
@@ -114,8 +114,8 @@ export default function Dashboard() {
             created_at,
             assignee_id,
             team_id,
-            assignee:assignee_id(full_name, email),
-            team:team_id(name)
+            profiles!tasks_assignee_id_fkey(full_name, email),
+            teams!tasks_team_id_fkey(name)
           `)
           .order('created_at', { ascending: false })
           .limit(10)
