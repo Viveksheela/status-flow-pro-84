@@ -13,11 +13,13 @@ import {
   TrendingUp,
   LogOut,
   Plus,
-  KanbanSquare
+  KanbanSquare,
+  UserCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TaskList } from '@/components/dashboard/TaskList';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface DashboardStats {
   totalTasks: number;
@@ -206,6 +208,7 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <Button
               variant="ghost"
               onClick={() => navigate('/kanban')}
@@ -213,6 +216,14 @@ export default function Dashboard() {
             >
               <KanbanSquare className="mr-2 h-4 w-4" />
               Kanban Board
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="hover-lift"
+            >
+              <UserCircle className="mr-2 h-4 w-4" />
+              Profile
             </Button>
             {isAdmin && (
               <Button
